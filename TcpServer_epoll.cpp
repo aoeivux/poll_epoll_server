@@ -5,6 +5,9 @@
 #include <arpa/inet.h>
 #include <sys/epoll.h>
 
+// socket->bind->listen
+// epoll_create
+// epoll_wait
 int main()
 {
     // 1.创建套接字
@@ -60,16 +63,25 @@ int main()
     // 开始检测
     while(true)
     {
-        int nums = epoll_wait(epfd, events, s1/s2, 1);//milliseconds
+		// epoll_wait用于监听套接字事件，可以通过设置超时时间timeout来控制监听的行为为阻塞模式还是超时模式
+		// timeout：超时时间
+		// 小于0：一直等待
+		// 等于0：立即返回
+		// 大于0：等待超时时间返回，单位毫秒
+        int nums = epoll_wait(epfd, events, s1/s2, 1);//milliseconds 
+		// nums返回值
+		// 小于0：出错
+		// 等于0：超时
+		// 大于0：返回就绪事件个数
         printf("serverFd=%d,nums = %d\n", serverFd,nums);
 
-        // 遍历状态变化的文件描述符集合
+        // 遍历状态变化的文件描述符集合(遍历就绪队列)
         for(int i=0; i<nums; ++i)
         {
             int curfd = events[i].data.fd;
 
             printf("curfd=%d \n",curfd);
-            // 有新连接
+            // 有新连接, 为服务器的fd
             if(curfd == serverFd)
             {
                 struct sockaddr_in conn_addr;
@@ -84,13 +96,13 @@ int main()
                     break;
                 }
                 // 将通信的fd挂到树上
-                serverFdEvt.events = EPOLLIN | EPOLLOUT;
+                serverFdEvt.events = EPOLLIN | EPOLLOUT;// 读写
 //                serverFdEvt.events = EPOLLIN;
                 serverFdEvt.data.fd  = connfd;
                 epoll_ctl(epfd, EPOLL_CTL_ADD, connfd, &serverFdEvt);
             }
                 // 通信
-            else
+            else// 客户端事件fd
             {
                 // 读事件触发, 写事件触发
 //                if(events[i].events & EPOLLOUT)
