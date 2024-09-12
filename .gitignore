@@ -1,0 +1,13 @@
+﻿# clion
+.idea/
+cmake-build-debug/*
+# vs
+.vs
+
+build/
+
+x64/*
+IO多路复用select-poll-epoll 第2讲.docx
+
+
+
